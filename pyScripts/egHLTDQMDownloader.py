@@ -156,13 +156,11 @@ def get_datasets_runs_in_file(file_):
     file_.cd("DQMData")
 
     for key in gDirectory.GetListOfKeys():
-        print key.GetName(),key.GetClassName()
         if key.GetClassName().find("TDirectory")==0:
             dataset_name = "/"+key.GetName().replace("--","/")
             if dataset_name not in datasets_runs:
                 datasets_runs[dataset_name] = {'runs': []}
                 for subdir in gDirectory.Get(key.GetName()).GetListOfKeys():
-                    print subdir.GetName()
                     datasets_runs[dataset_name]['runs'].append(subdir.GetName().split()[1])
 
     old_dir.cd()
