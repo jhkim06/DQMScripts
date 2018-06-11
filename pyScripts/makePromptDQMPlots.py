@@ -44,8 +44,8 @@ def get_hists_to_plot():
     hists_to_plot.append(ROOT.HistInfo("HLT_Ele115_CaloIdVT_GsfTrkIdT","eleWPTightTag","hltEle115CaloIdVTGsfTrkIdTGsfDphiFilter","EGamma"))
     return hists_to_plot
     
-def get_runs_already_processed(base_output_dir):
-    for week_nr in range(53,0,-1):
+def get_runs_already_processed(base_output_dir,current_week_nr):
+    for week_nr in range(int(current_week_nr)-1,0,-1):
         week_str='week{:02d}'.format(week_nr)
         file_name = base_output_dir+'/'+week_str+'/runs.json'
         if os.path.isfile(file_name):
@@ -59,6 +59,7 @@ def generate_week_index_links(current_week_str,base_output_dir):
     link_str+='<li><a href="{}">{}</a>'.format(current_week_str,current_week_str)
     for week_nr in range(53,0,-1):
         week_str='week{:02d}'.format(week_nr)
+        if week_str == current_week_str: continue
         file_name = base_output_dir+'/'+week_str+'/index.html'
         if os.path.isfile(file_name):
             link_str+='<li><a href="{}">{}</a>'.format(week_str,week_str)
@@ -107,10 +108,7 @@ def makePromptDQMPlots(filename,base_output_dir,update,run_info):
     week_str = 'week'+datetime.datetime.today().strftime("%U")
     if not os.path.exists(base_output_dir+"/"+week_str):
         os.mkdir(base_output_dir+"/"+week_str)
-
-    
-   
-    
+ 
     ref_runs_info = ROOT.RunsInfo(ROOT.vector('int')(),'reference')
     for ref_run in ref_runs:
         ref_runs_info.runs.push_back(ref_run)
@@ -119,7 +117,7 @@ def makePromptDQMPlots(filename,base_output_dir,update,run_info):
     
     runs_availible = egHLTDQMDownloader.get_datasets_runs_in_file(root_file)
 
-    runs_already_processed = get_runs_already_processed(base_output_dir)
+    runs_already_processed = get_runs_already_processed(base_output_dir,datetime.datetime.today().strftime("%U"))
 
     fills = convert_to_fills(runs_availible,run_info)
     fillnrs = fills.keys()
@@ -211,9 +209,6 @@ def makePromptDQMPlots(filename,base_output_dir,update,run_info):
         
     with open(base_output_dir+"/index.html","w") as f:
         f.write(main_index_html_str)
-
-  #  week_html_str = ""
-
     with open(base_output_dir+"/"+week_str+"/index.html","w") as f:
         f.write(week_html_str)
     runs_processed[week_str].sort(reverse=True)
