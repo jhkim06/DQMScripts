@@ -93,6 +93,19 @@ def get_new_fills(fills,runs_already_processed):
                 break
     return new_fills
 
+def get_validation_week_nr():
+    """
+    returns the week number starting wed (aka TSG meeting), the day may change
+    """
+    day_offset = 2
+    isoyear,isoweek,isoweekday = datetime.datetime.today().isocalendar()
+    isoweekday -= day_offset
+    if isoweekday <= 0 : 
+        isoweekday += 7
+        isoweek -= 1
+    #this might be buggy but we dont really care
+    if isoweek < 0: isoweek +=52
+    return str(isoweek)
 
 def makePromptDQMPlots(filename,base_output_dir,update,run_info):
     ROOT.gErrorIgnoreLevel = ROOT.kError
@@ -105,7 +118,7 @@ def makePromptDQMPlots(filename,base_output_dir,update,run_info):
     elif not update:
         print "error, ",base_output_dir," exists and update is not set to true"
         sys.exit()
-    week_str = 'week'+datetime.datetime.today().strftime("%U")
+    week_str = 'week'+get_validation_week_nr()
     if not os.path.exists(base_output_dir+"/"+week_str):
         os.mkdir(base_output_dir+"/"+week_str)
  
@@ -117,7 +130,7 @@ def makePromptDQMPlots(filename,base_output_dir,update,run_info):
     
     runs_availible = egHLTDQMDownloader.get_datasets_runs_in_file(root_file)
 
-    runs_already_processed = get_runs_already_processed(base_output_dir,datetime.datetime.today().strftime("%U"))
+    runs_already_processed = get_runs_already_processed(base_output_dir,get_validation_week_nr())
 
     fills = convert_to_fills(runs_availible,run_info)
     fillnrs = fills.keys()
@@ -137,7 +150,7 @@ def makePromptDQMPlots(filename,base_output_dir,update,run_info):
     main_index_html_str += "<h2>All 2018 Runs</h2>"
     main_index_html_str += generate_path_index_links(hists_to_plot)
 
-    week_html_str = "<h1>E/gamma HLT Validation: week "+datetime.datetime.today().strftime("%U")+"</h1>"
+    week_html_str = "<h1>E/gamma HLT Validation: week "+get_validation_week_nr()+"</h1>"
     week_html_str += "runs:"
     for fill in new_fills:
         for run in fills[fill]:
