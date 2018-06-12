@@ -16,7 +16,7 @@ generates a webpage with all the monitoring information for easy viewing. It req
 
 To download the histograms from the gui, simply use this command
     
-    pyScripts/egHLTDQMDownloader.py --output egammaDQMHists.root --dataset /EGamma/Run2018*-PromptReco-v\*/DQMIO
+    pyScripts/egHLTDQMDownloader.py --output egammaDQMHists.root --dataset /EGamma/Run2018\*-PromptReco-v\*/DQMIO
 
 This will dump all the required histograms for all runs in any of the datasets matching the patter specified after "--dataset" into the root file "egammaDQMHists.root". It is enforced that a run only appears once per primary dataset, it resolves this by taking the run from the newest dataset. This can take some time, say around 20-30mins to complete. 
 
