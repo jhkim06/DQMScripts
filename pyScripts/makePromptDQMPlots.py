@@ -150,7 +150,7 @@ def makePromptDQMPlots(filename,base_output_dir,update,run_info):
     main_index_html_str += "<h2>All 2018 Runs</h2>"
     main_index_html_str += generate_path_index_links(hists_to_plot)
 
-    week_html_str = "<h1>E/gamma HLT Validation: week "+get_validation_week_nr()+"</h1>"
+    week_html_str = "<h1 id=\"top\">E/gamma HLT Validation: week "+get_validation_week_nr()+"</h1>"
     week_html_str += "runs:"
     for fill in new_fills:
         for run in fills[fill]:
@@ -175,6 +175,7 @@ def makePromptDQMPlots(filename,base_output_dir,update,run_info):
             
         index_file = open(base_output_dir+"/"+hist_info.pathName+"/index.html","w")
         week_html_str += '<h2 id=\"{path_name}\">{path_name}</h2>'.format(path_name=hist_info.pathName) 
+        week_html_str += '<a href="#top">back to table of contents</a><br><br>'
         week_output_name = hist_info.pathName+"-"+hist_info.filterName+"-"+week_str+".png"
         week_html_str += "<a href=\"{name}\"><img class=\"image\" width=\"1000\" src=\"{name}\" ALIGH=TOP></a><br><br>\n".format(name=week_output_name)
         week_runs_info =  ROOT.RunsInfo(ROOT.vector('int')(),week_str)
