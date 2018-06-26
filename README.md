@@ -64,7 +64,7 @@ Now once we have an area setup, the workflow is as follows
     
     #now download histograms from the DQM gui
     cd DQMScripts
-    ./pyScripts/egHLTDQMDownloader.py --output egammaDQMHists.root --dataset /EGamma/Run2018*-PromptReco-v\*/DQMIO
+    ./pyScripts/egHLTDQMDownloader.py --output egammaDQMHists.root --dataset /EGamma/Run2018\*-PromptReco-v\*/DQMIO
     
     #now run over the histograms and generate the webpage
     ./pyScripts/makePromptDQMPlots.py  egammaDQMHists.root -r hltData2018_runInfo.json  -o eghltweb
