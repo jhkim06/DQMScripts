@@ -37,6 +37,7 @@ def convert_to_fills(datasets_runs,run_info):
 
 def makeOnlineDQMPlots(filename,base_output_dir,update,run_info):
     ROOT.gErrorIgnoreLevel = ROOT.kError
+    ROOT.gROOT.ProcessLine(".L rootScripts/RooCMSShape.cc++")
     ROOT.gROOT.ProcessLine(".L rootScripts/makeOnlineDQMPlots.C+")
 
     if not os.path.exists(base_output_dir):
@@ -95,6 +96,7 @@ def makeOnlineDQMPlots(filename,base_output_dir,update,run_info):
 
             if new_run:
                 ROOT.makePlot(root_file,hist_info,val_runs_info_all) 
+                ROOT.effCanvas.Print(base_output_dir+"/"+hist_info.pathName+"/"+output_name)
 
 
 if __name__ == "__main__":  
