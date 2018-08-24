@@ -310,7 +310,7 @@ TGraphAsymmErrors* getMultiRunEffAsym(TFile* file,const std::string& baseDir,con
     }
     if(title.empty() && effHist){
       std::vector<std::string> results;
-      std::string nameTemp(effHist->GetTitle());
+      std::string nameTemp(passHist->GetTitle());
 
       // get variable string
       std::vector<std::string> var;

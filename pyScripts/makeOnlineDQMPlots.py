@@ -8,6 +8,28 @@ import json
 import datetime
 import egHLTDQMDownloader_v2
 
+def generate_week_index_links(current_week_str,base_output_dir):
+    link_str = """<div id="toc_container">
+    <ul class="toc_list">"""
+    link_str+='<li><a href="{}">{}</a>'.format(current_week_str,current_week_str)
+    for week_nr in range(53,0,-1):
+        week_str='week{:02d}'.format(week_nr)
+        if week_str == current_week_str: continue
+        file_name = base_output_dir+'/'+week_str+'/index.html'
+        if os.path.isfile(file_name):
+            link_str+='<li><a href="{}">{}</a>'.format(week_str,week_str)
+    link_str +='</ul></div>'
+    return link_str
+
+def generate_path_index_links(hists_to_plot):
+    link_str = """<div id="toc_container">
+    <p class="toc_title">Paths</p>
+    <ul class="toc_list">"""
+    for hist_info in hists_to_plot:
+        link_str += "<li><a href=\"{path_name}\">{path_name}</a><br>\n".format(path_name=hist_info.pathName)
+    link_str +='</ul></div>'
+    return link_str
+
 def get_new_fills(fills,runs_already_processed):
     new_fills=[]
     for fill in fills:
@@ -69,14 +91,45 @@ def makeOnlineDQMPlots(filename,base_output_dir,update,run_info):
     for fill in new_fills:
         new_runs.extend(fills[fill])
     new_runs.sort(reverse=True)
+
+    week_str = 'test day' #FIXME
+
+    main_index_html_str = "<h1>E/gamma HLT Validation<h1>\n<h2> Daily updates </h2>"
+    main_index_html_str += generate_week_index_links(week_str,base_output_dir)
+    main_index_html_str += "<h2>All 2018 Runs</h2>"
+    main_index_html_str += generate_path_index_links(hists_to_plot)
+
+    week_html_str = "<h1 id=\"top\">E/gamma HLT Validation: day </h1>" #FIXME: 
+    week_html_str += "runs:"
+    for fill in new_fills:
+        for run in fills[fill]:
+            week_html_str +=' <a href=\"https://cmswbm.cern.ch/cmsdb/servlet/RunSummary?RUN={run}\">{run}</a>'.format(run=run)
+    week_html_str += "<br>ref runs:"
+
+    week_html_str += "<br>"
+    week_html_str += """
+    <div id="toc_container">
+    <p class="toc_title">Paths</p>
+    <ul class="toc_list">"""
+    for hist_info in hists_to_plot:
+        week_html_str+='<li><a href="#{path_name}">{path_name}</a>'.format(path_name=hist_info.pathName)
+    week_html_str +='</ul></div>'
   
     # 
     for hist_info in hists_to_plot:
         if not os.path.exists(base_output_dir+"/"+hist_info.pathName):
             os.mkdir(base_output_dir+"/"+hist_info.pathName)
 
+        index_file = open(base_output_dir+"/"+hist_info.pathName+"/index.html","w")
+        week_html_str += '<h2 id=\"{path_name}\">{path_name}</h2>'.format(path_name=hist_info.pathName) 
+        week_html_str += '<a href="#top">back to table of contents</a><br><br>'
+        week_output_name = hist_info.pathName+"-"+hist_info.filterName2+"-"+week_str+".png"
+        week_html_str += "<a href=\"{name}\"><img class=\"image\" width=\"1000\" src=\"{name}\" ALIGH=TOP></a><br><br>\n".format(name=week_output_name)
         week_runs_info =  ROOT.RunsInfo(ROOT.vector('int')(),"test") # use test here for temporary
+
+        count = 0
         for fill in fillnrs:
+            count = count + 1
             new_run = False
             val_runs_info_all = ROOT.std.vector('RunsInfo')()
             print fill,fills[fill]
@@ -91,12 +144,29 @@ def makeOnlineDQMPlots(filename,base_output_dir,update,run_info):
 
             val_runs_info_all.push_back(fill_runs_info)
             
-            output_name = hist_info.pathName+"-"+hist_info.filterName1+"-Fill"+str(fill)+".png"
+            output_name = hist_info.pathName+"-"+hist_info.filterName2+"-Fill"+str(fill)+".png"
             print output_name
 
+            #if new_run and count < 2:
             if new_run:
                 ROOT.makePlot(root_file,hist_info,val_runs_info_all) 
                 ROOT.effCanvas.Print(base_output_dir+"/"+hist_info.pathName+"/"+output_name)
+
+
+            html_str = "Path: {} Filter: {} <br>\n".format(hist_info.pathName,hist_info.filterName2)
+            html_str += "  Fill <a href=\"https://cmswbm.cern.ch/cmsdb/servlet/FillRuntimeChart?lhcFillID={fill}\">{fill}</a>, runs ".format(fill=fill)
+            for run in fills[fill]:
+                html_str +=' <a href=\"https://cmswbm.cern.ch/cmsdb/servlet/RunSummary?RUN={run}\">{run}</a>'.format(run=run)           
+            html_str += "<br>\n"
+            html_str += "<a href=\"{name}\"><img class=\"image\" width=\"1000\" src=\"{name}\" ALIGH=TOP></a><br><br>\n".format(name=output_name)
+            index_file.write(html_str)
+            
+            if new_run:
+                week_html_str += "  Fill <a href=\"https://cmswbm.cern.ch/cmsdb/servlet/FillRuntimeChart?lhcFillID={fill}\">{fill}</a>, runs ".format(fill=fill)
+                for run in fills[fill]:
+                    week_html_str +=' <a href=\"https://cmswbm.cern.ch/cmsdb/servlet/RunSummary?RUN={run}\">{run}</a>'.format(run=run)           
+                week_html_str += "<br>\n"
+                week_html_str += "<a href=\"{name}\"><img class=\"image\" width=\"1000\" src=\"{name}\" ALIGH=TOP></a><br><br>\n".format(name="../"+hist_info.pathName+"/"+output_name)  
 
 
 if __name__ == "__main__":  
