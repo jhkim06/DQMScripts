@@ -163,15 +163,15 @@ def makeOnlineDQMPlots(filename,base_output_dir,update,run_info):
             print output_name
 
             #if new_run and count < 2:
-            #if new_run:
-            #    ROOT.makePlot(root_file,hist_info,ref_runs_info,val_runs_info_all) 
-            #    ROOT.effCanvas.Print(base_output_dir+"/"+hist_info.pathName+"/"+output_name)
-            #    ROOT.effCanvas.Print(base_output_dir+"/"+hist_info.pathName+"/"+output_name)
-            #    ROOT.fitCanvas1.Print(base_output_dir+"/"+hist_info.pathName+"/"+fitoutput_name1)
-            #    ROOT.fitCanvas2.Print(base_output_dir+"/"+hist_info.pathName+"/"+fitoutput_name2)
-            #    ROOT.fitCanvas3.Print(base_output_dir+"/"+hist_info.pathName+"/"+fitoutput_name3)
-            #    ROOT.fitCanvas4.Print(base_output_dir+"/"+hist_info.pathName+"/"+fitoutput_name4)
-            #    ROOT.fitCanvas5.Print(base_output_dir+"/"+hist_info.pathName+"/"+fitoutput_name5)
+            if new_run:
+                ROOT.makePlot(root_file,hist_info,ref_runs_info,val_runs_info_all) 
+                ROOT.effCanvas.Print(base_output_dir+"/"+hist_info.pathName+"/"+output_name)
+                ROOT.effCanvas.Print(base_output_dir+"/"+hist_info.pathName+"/"+output_name)
+                ROOT.fitCanvas1.Print(base_output_dir+"/"+hist_info.pathName+"/"+fitoutput_name1)
+                ROOT.fitCanvas2.Print(base_output_dir+"/"+hist_info.pathName+"/"+fitoutput_name2)
+                ROOT.fitCanvas3.Print(base_output_dir+"/"+hist_info.pathName+"/"+fitoutput_name3)
+                ROOT.fitCanvas4.Print(base_output_dir+"/"+hist_info.pathName+"/"+fitoutput_name4)
+                ROOT.fitCanvas5.Print(base_output_dir+"/"+hist_info.pathName+"/"+fitoutput_name5)
 
 
             html_str = "Path: {} Filter1: {} Filter2: {} <br>\n".format(hist_info.pathName,hist_info.filterName1,hist_info.filterName2)
