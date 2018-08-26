@@ -96,16 +96,41 @@ TH1* MakeFailHist(TH1* passed, TH1* total){
   return h_temp;
 }
 
-TGraphAsymmErrors* DQMpureHLT_TnP_bwxcb(TH2* hist_passed_2d, TH2* hist_total_2d)
+TGraphAsymmErrors* DQMpureHLT_TnP_bwxcb(TCanvas* c2,TH2* hist_passed_2d, TH2* hist_total_2d, const std::string& fill, const std::string& var)
 {
  // get the number of bins in xais and bin array
  const double *xaxis = (hist_total_2d->GetXaxis()->GetXbins())->GetArray();
  int nbinx = hist_total_2d->GetNbinsX();
 
+ vector<TString> binNames;
+ for( int i = 0; i < nbinx; i++){
+      TString lowerBound, upperBound;
+      lowerBound.Form("%.2f", xaxis[i]);
+      upperBound.Form("%.2f", xaxis[i+1]);
+      binNames.push_back("_" + var + "_" + lowerBound+ "_" + var + "_" + upperBound);
+      cout << "check bin names: " << var + lowerBound + var + upperBound <<  endl;
+ }
+
  TH1D* htotalSig = new TH1D("htotalSig","htotalSig", nbinx, xaxis);
  TH1D* hPtotalSig = new TH1D("hPtotalSig","hPtotalSig", nbinx, xaxis);
 
+
  for(int ibin = 1; ibin < nbinx + 1; ibin++){
+
+  // make pad for fit results
+  float xOffset = ((ibin-1)%6)%2 * 0.5;
+  float yOffset = ((ibin-1)%6)/2 * 0.33;
+
+  //TPad* fitPad = new TPad("fitPad","",xOffset,yOffset+0.01,0.33+xOffset,0.5+yOffset);
+  TPad* fitPad = new TPad("fitPad","",xOffset,yOffset,0.5+xOffset,0.33+yOffset);
+  c2->cd();
+  fitPad->Draw();
+  fitPad->cd();
+  fitPad->SetGridx();
+  fitPad->SetGridy();
+
+  c2->cd();
+  fitPad->cd();
 
   TH1* passHist;
   TH1* failHist;
@@ -224,9 +249,85 @@ TGraphAsymmErrors* DQMpureHLT_TnP_bwxcb(TH2* hist_passed_2d, TH2* hist_total_2d)
   htotalSig->SetBinError(ibin, _work->var("nSigP")->getError() + _work->var("nSigF")->getError());
   hPtotalSig->SetBinContent(ibin, _work->var("nSigP")->getVal());
   hPtotalSig->SetBinError(ibin, _work->var("nSigP")->getError());
+
+  fitPad->Divide(2,1,0.001,0.001);
+  gStyle->SetOptStat(0);
+
+  float yTitleOffset = 1.0;
+  float yTitleSize = 0.05;
+  float yLabelSize = 0.05;
+  float xTitleOffset = 1.;
+  float xTitleSize = 0.05;
+  float xLabelSize = 0.05;
+
+  fitPad->cd(1);
+  //gPad->SetLogy();
+  fitPad->SetTicky(1);
+  fitPad->SetTickx(1);
+  fitPad->SetBottomMargin(0.12);
+  fitPad->SetRightMargin(0.05);
+  pPass->SetMaximum(1.2*pPass->GetMaximum());
+  pPass->SetMinimum(1e-2);
+  pPass->GetYaxis()->SetTitleOffset(yTitleOffset);
+  pPass->GetYaxis()->SetTitleSize(yTitleSize);
+  pPass->GetYaxis()->SetLabelSize(yLabelSize);
+  pPass->GetYaxis()->SetDecimals(2);
+  pPass->GetXaxis()->SetTitleOffset(xTitleOffset);
+  pPass->GetXaxis()->SetLabelSize(xLabelSize);
+  pPass->GetXaxis()->SetTitleSize(xTitleSize);
+  pPass->SetMarkerStyle(20);
+  pPass->SetMarkerColor(kRed);
+  pPass->SetLineColor(kRed);
+  pPass->Draw("pe");
+
+  TLatex passFitInfo;
+  passFitInfo.SetNDC();
+  passFitInfo.SetTextFont(42);
+  passFitInfo.SetTextSize(0.035);
+ 
+  TString chiPass;
+  chiPass.Form("chi^{2}/NDF = %.3f", chi2P);
+  passFitInfo.DrawLatex(0.65,0.85, chiPass);
+
+  TLatex passBinInfo;
+  passBinInfo.SetNDC();
+  passBinInfo.SetTextFont(42);
+  passBinInfo.SetTextSize(0.035);
+  passBinInfo.DrawLatex(0.65,0.75, binNames.at(ibin-1));
+
+  fitPad->cd(2);
+  fitPad->SetTicky(1);
+  fitPad->SetTickx(1);
+  fitPad->SetBottomMargin(0.12);
+  fitPad->SetRightMargin(0.05);
+  pFail->SetMaximum(1.2*pFail->GetMaximum());
+  pFail->SetMinimum(1e-2);
+  pFail->GetYaxis()->SetTitleOffset(yTitleOffset);
+  pFail->GetYaxis()->SetTitleSize(yTitleSize);
+  pFail->GetYaxis()->SetLabelSize(yLabelSize);
+  pFail->GetYaxis()->SetDecimals(2);
+  pFail->GetXaxis()->SetTitleOffset(xTitleOffset);
+  pFail->GetXaxis()->SetLabelSize(xLabelSize);
+  pFail->GetXaxis()->SetTitleSize(xTitleSize);
+  pFail->SetMarkerStyle(20);
+  //pPass->SetMinimum(0.5);
+  //pPass->SetMaximum(1.01);
+  pFail->SetMarkerColor(kRed);
+  pFail->SetLineColor(kRed);
+  pFail->Draw("pe");
+
+  TLatex failFitInfo;
+  failFitInfo.SetNDC();
+  failFitInfo.SetTextFont(42);
+  failFitInfo.SetTextSize(0.03);
+
+  TString chiFail;
+  chiFail.Form("chi^{2}/NDF = %.3f", chi2F);
+  failFitInfo.DrawLatex(0.65,0.85, chiFail);
  
   delete passHist;
   delete failHist;
+  delete _work;
  }
 
  //TGraphAsymmErrors* eff = new TGraphAsymmErrors(hPtotalSig,htotalSig,"B");
@@ -289,13 +390,17 @@ TGraphAsymmErrors* getMultiRunEffAsym(TFile* file,const std::string& baseDir,con
     //  }else return nullptr;
 }
 
-TGraphAsymmErrors* getMultiRunEffAsym(TFile* file,const std::string& baseDir,const std::string& histName1, const std::string& histName2, const RunsInfo& refRuns)
+TGraphAsymmErrors* getMultiRunEffAsym(TFile* file,TCanvas* c2,const std::string& baseDir,const std::string& histName1, const std::string& histName2, const RunsInfo& refRuns)
 {
   const std::string totSuffex = "_tot";
   const std::string passSuffex = "_pass";
   const std::string effSuffex = "_eff"; //only for the axis titles
   TH2* passHistAll = nullptr;
   TH2* totHistAll = nullptr;
+
+  std::vector<std::string> results; //FIXME : change name 
+  std::vector<std::string> var;
+
   std::string title;
   for(auto runnr : refRuns.runs){
     std::string dir = boost::algorithm::replace_all_copy(baseDir,"{%runnr}",std::to_string(runnr));
@@ -309,11 +414,9 @@ TGraphAsymmErrors* getMultiRunEffAsym(TFile* file,const std::string& baseDir,con
       continue;
     }
     if(title.empty() && effHist){
-      std::vector<std::string> results;
       std::string nameTemp(passHist->GetTitle());
 
       // get variable string
-      std::vector<std::string> var;
       std::string varTemp(effHist->GetXaxis()->GetTitle());
 
       boost::split(results, nameTemp, [](char c){return c == '_';});
@@ -328,16 +431,17 @@ TGraphAsymmErrors* getMultiRunEffAsym(TFile* file,const std::string& baseDir,con
     else totHistAll = totHist;
   }
  
-    if(passHistAll && totHistAll){
-  auto effGraph = DQMpureHLT_TnP_bwxcb(passHistAll,totHistAll);
+  if(passHistAll && totHistAll){
+    std::cout << "fill: " << refRuns.legendEntry.c_str() << std::endl;;
+    auto effGraph = DQMpureHLT_TnP_bwxcb(c2,passHistAll,totHistAll, refRuns.legendEntry, var.at(0));
 
-  if(!title.empty()){ 
-    effGraph->SetTitle(title.c_str());
-    std::cout << "x axis: " << effGraph->GetXaxis()->GetTitle() << std::endl;
-    std::cout << "y axis: " << effGraph->GetYaxis()->GetTitle() << std::endl;
-  }
-  return effGraph;
-     }else return nullptr;
+    if(!title.empty()){ 
+      effGraph->SetTitle(title.c_str());
+      std::cout << "x axis: " << effGraph->GetXaxis()->GetTitle() << std::endl;
+      std::cout << "y axis: " << effGraph->GetYaxis()->GetTitle() << std::endl;
+    }
+    return effGraph;
+  }else return nullptr;
 }
 
 TH2* getMultiRun2DEff(TFile* file,const std::string& baseDir,const std::string& histName,const RunsInfo& refRuns)
@@ -507,7 +611,7 @@ void plot1DHistWithRef(TFile* file,TCanvas* c1,float xOffset,float yOffset,const
   leg->Draw();
 }
 
-void plot1DHist(TFile* file,TCanvas* c1,float xOffset,float yOffset,const std::string& baseDir,const HistInfo& histInfo,const std::string& suffex,const std::vector<RunsInfo>& runsToValidate)
+void plot1DHist(TFile* file,TCanvas* c1,TCanvas* c2, float xOffset,float yOffset,const std::string& baseDir,const HistInfo& histInfo,const std::string& suffex,const std::vector<RunsInfo>& runsToValidate)
 {
   std::string histName1 = "stdTag_"+histInfo.pathName+histInfo.filterName1+suffex;
   std::string histName2 = "stdTag_"+histInfo.pathName+histInfo.filterName2+suffex;
@@ -519,13 +623,13 @@ void plot1DHist(TFile* file,TCanvas* c1,float xOffset,float yOffset,const std::s
   histPad->SetGridx();
   histPad->SetGridy();
   
-  c1->cd();
-  histPad->cd();
 
   // loop over fill numbers 
   for(size_t runIdx=0;runIdx<runsToValidate.size(); runIdx++){
     const auto& runs = runsToValidate[runIdx];
-    TGraphAsymmErrors* graph = getMultiRunEffAsym(file,baseDir,histName1,histName2,runs);
+    TGraphAsymmErrors* graph = getMultiRunEffAsym(file,c2,baseDir,histName1,histName2,runs);
+    c1->cd();
+    histPad->cd();
     util::setHistStyle(graph,4,1,8,4);
     graph->GetYaxis()->SetRangeUser(0,1.05);
     graph->SetMarkerSize(0.5);
@@ -536,6 +640,85 @@ void plot1DHist(TFile* file,TCanvas* c1,float xOffset,float yOffset,const std::s
     graph->GetYaxis()->SetTitleSize(0.035);
     graph->Draw("AP");
   }
+}
+
+void plot1DHistWithRef(TFile* file,TCanvas* c1,TCanvas* c2, TCanvas* c3, float xOffset,float yOffset,const std::string& baseDir,const HistInfo& histInfo,const std::string& suffex,const RunsInfo& refRuns,const std::vector<RunsInfo>& runsToValidate)
+{ 
+
+  auto unityFunc = new TF1("unityFunc","1.0+0*[0]");
+  unityFunc->SetParLimits(0,-0.1,0.1);
+  unityFunc->SetParameter(0,0);
+
+  //std::string histName1 = "stdTag_"+histInfo.pathName+histInfo.filterName1+suffex;
+  //std::string histName2 = "stdTag_"+histInfo.pathName+histInfo.filterName2+suffex;
+
+  std::string histName1 = "stdTag_"+histInfo.filterName1+suffex;
+  std::string histName2 = "stdTag_"+histInfo.filterName2+suffex;
+
+  std::cout << "histname1: " << histName1 << " histname2: " << histName2 << std::endl;
+  TPad* histPad = new TPad("histPad","",xOffset,yOffset+0.5*0.30,0.33+xOffset,0.5+yOffset);
+  c1->cd();
+  histPad->Draw();
+  histPad->cd();
+  histPad->SetGridx();
+  histPad->SetGridy();
+
+  TPad* ratioPad = new TPad("ratioPad","",xOffset,yOffset+0.01,0.33+xOffset,0.5*0.33+yOffset);
+  //ratioPad->SetTopMargin(0.05);
+  ratioPad->SetBottomMargin(0.3);
+  //ratioPad->SetFillStyle(0);
+  ratioPad->SetGridx();
+  ratioPad->SetGridy();
+  c1->cd();
+  ratioPad->Draw();
+  histPad->cd();
+  TGraphAsymmErrors* ref = getMultiRunEffAsym(file,c3,baseDir,histName1,histName2,refRuns);
+  c1->cd();
+  histPad->cd();
+  util::setHistStyle(ref,1,1,8,1);
+  ref->SetFillStyle(0);
+  ref->Draw("APE");
+  ref->GetYaxis()->SetRangeUser(0,1.05);
+  ref->GetYaxis()->SetNdivisions(510);
+  ref->GetXaxis()->SetTitle("");
+  TLegend* leg = new TLegend(0.305728,0.142857,0.847496,0.344948);
+  leg->SetFillStyle(0);
+  leg->SetBorderSize(0);
+  
+  // loop over fill numbers 
+  for(size_t runIdx=0;runIdx<runsToValidate.size(); runIdx++){
+    const auto& runs = runsToValidate[runIdx];
+    TGraphAsymmErrors* graph = getMultiRunEffAsym(file,c2,baseDir,histName1,histName2,runs);
+    c1->cd();
+    histPad->cd();
+    util::setHistStyle(graph,4,1,8,4);
+    TGraphAsymmErrors* ratio = getRatio(graph,ref);
+    ratio->GetXaxis()->SetLimits(ref->GetXaxis()->GetXmin(),ref->GetXaxis()->GetXmax());
+    ratio->GetHistogram()->SetMinimum(0.5);
+    ratio->GetHistogram()->SetMaximum(1.5);
+    ratio->GetYaxis()->SetNdivisions(505);
+    ratio->GetXaxis()->SetTitle(graph->GetXaxis()->GetTitle());
+    ratio->GetXaxis()->SetLabelSize(0.1);
+    ratio->GetXaxis()->SetTitleSize(0.1);
+    ratio->GetYaxis()->SetLabelSize(0.1);
+    ratio->GetYaxis()->SetTitleSize(0.1);
+    ratio->SetMarkerStyle(8);
+    ratio->SetTitle("");
+
+    ratioPad->cd();
+    ratio->Fit(&*unityFunc,"q");
+    ratio->SetFillStyle(0);
+    ratio->Draw("APE");
+    histPad->cd();
+
+    graph->SetFillStyle(0);
+    graph->Draw("P");
+    leg->AddEntry(graph,runs.legendEntry.c_str());
+  }
+  leg->AddEntry(ref,refRuns.legendEntry.c_str());
+  leg->Draw();
+  c1->cd();
+  
 }
 
 void plot2DHist(TFile* file,TCanvas* c1,float xOffset,float yOffset,const std::string& baseDir,const HistInfo& histInfo,const std::string& suffex,const std::vector<RunsInfo>& runsToValidate)
@@ -560,15 +743,29 @@ void plot2DHist(TFile* file,TCanvas* c1,float xOffset,float yOffset,const std::s
   }
     
 }
-TCanvas* makePlot(TFile* file,const HistInfo& histInfo,const std::vector<RunsInfo>& runsToValidate)
+void makePlot(TFile* file,const HistInfo& histInfo,const std::vector<RunsInfo>& runsToValidate)
 {  
   gStyle->SetOptStat(0);
   std::string baseDir = "/DQMData/Run {%runnr}/HLT/Run summary/EGM/TrigObjTnP/";
   std::vector<std::string> suffexes ={"_ptEE","_ptEB","_phiEE", "_phiEB","_eta"};
 
   TCanvas* c1 = static_cast<TCanvas*>(gROOT->FindObject("effCanvas"));
+  TCanvas* c2[5]; // canvas for fit results 
+
+  c2[0] = static_cast<TCanvas*>(gROOT->FindObject("fitCanvas1"));
+  c2[1] = static_cast<TCanvas*>(gROOT->FindObject("fitCanvas2"));
+  c2[2] = static_cast<TCanvas*>(gROOT->FindObject("fitCanvas3"));
+  c2[3] = static_cast<TCanvas*>(gROOT->FindObject("fitCanvas4"));
+  c2[4] = static_cast<TCanvas*>(gROOT->FindObject("fitCanvas5"));
+
   if(!c1) c1 = new TCanvas("effCanvas","",900*1.5*2,750*2);
-  c1->cd();
+
+  if(!c2[0]) c2[0] = new TCanvas("fitCanvas1","",900*2,750*3);
+  if(!c2[1]) c2[1] = new TCanvas("fitCanvas2","",900*2,750*3);
+  if(!c2[2]) c2[2] = new TCanvas("fitCanvas3","",900*2,750*3);
+  if(!c2[3]) c2[3] = new TCanvas("fitCanvas4","",900*2,750*3);
+  if(!c2[4]) c2[4] = new TCanvas("fitCanvas5","",900*2,750*3);
+  //c1->cd(); need this? it seems not
 
   //  int minEntries=std::numeric_limits<int>::max();
   for(size_t histNr=0;histNr<5;histNr++){
@@ -577,18 +774,84 @@ TCanvas* makePlot(TFile* file,const HistInfo& histInfo,const std::vector<RunsInf
     if(histNr<suffexes.size()) suffex = suffexes[histNr];
     float yOffset = ((histNr)%6)%2 * 0.5;
     float xOffset = ((histNr)%6)/2 * 0.33;
-    plot1DHist(file,c1,xOffset,yOffset,baseDir,histInfo,suffex,runsToValidate);
+    plot1DHist(file,c1,c2[histNr],xOffset,yOffset,baseDir,histInfo,suffex,runsToValidate);
   }
  
   c1->Update(); 
-  return c1;
+  c2[0]->Update();
+  c2[1]->Update();
+  c2[2]->Update();
+  c2[3]->Update();
+  c2[4]->Update();
+  //return c1;
 
 }
 
-TCanvas* makePlotTest(TFile* file,const HistInfo& histInfo,const std::vector<RunsInfo>& runsToValidate)
-{
-  return makePlot(file,histInfo,runsToValidate);
+void makePlot(TFile* file,const HistInfo& histInfo, const RunsInfo& refRuns, const std::vector<RunsInfo>& runsToValidate)
+{ 
+  gStyle->SetOptStat(0);
+  std::string baseDir = "/DQMData/Run {%runnr}/HLT/Run summary/EGM/TrigObjTnP/";
+  std::vector<std::string> suffexes ={"_ptEE","_ptEB","_phiEE", "_phiEB","_eta"};
+  
+  TCanvas* c1 = static_cast<TCanvas*>(gROOT->FindObject("effCanvas"));
+  TCanvas* c2[5]; // canvas for fit results 
+  TCanvas* c3[5]; // canvas for fit results reference 
+  
+  c2[0] = static_cast<TCanvas*>(gROOT->FindObject("fitCanvas1"));
+  c2[1] = static_cast<TCanvas*>(gROOT->FindObject("fitCanvas2"));
+  c2[2] = static_cast<TCanvas*>(gROOT->FindObject("fitCanvas3"));
+  c2[3] = static_cast<TCanvas*>(gROOT->FindObject("fitCanvas4"));
+  c2[4] = static_cast<TCanvas*>(gROOT->FindObject("fitCanvas5"));
 
+  c3[0] = static_cast<TCanvas*>(gROOT->FindObject("reffitCanvas1"));
+  c3[1] = static_cast<TCanvas*>(gROOT->FindObject("reffitCanvas2"));
+  c3[2] = static_cast<TCanvas*>(gROOT->FindObject("reffitCanvas3"));
+  c3[3] = static_cast<TCanvas*>(gROOT->FindObject("reffitCanvas4"));
+  c3[4] = static_cast<TCanvas*>(gROOT->FindObject("reffitCanvas5"));
+  
+  if(!c1) c1 = new TCanvas("effCanvas","",900*1.5*2,750*2);
+  
+  if(!c2[0]) c2[0] = new TCanvas("fitCanvas1","",900*2,750*3);
+  if(!c2[1]) c2[1] = new TCanvas("fitCanvas2","",900*2,750*3);
+  if(!c2[2]) c2[2] = new TCanvas("fitCanvas3","",900*2,750*3);
+  if(!c2[3]) c2[3] = new TCanvas("fitCanvas4","",900*2,750*3);
+  if(!c2[4]) c2[4] = new TCanvas("fitCanvas5","",900*2,750*3);
 
+  if(!c3[0]) c3[0] = new TCanvas("reffitCanvas1","",900*2,750*3);
+  if(!c3[1]) c3[1] = new TCanvas("reffitCanvas2","",900*2,750*3);
+  if(!c3[2]) c3[2] = new TCanvas("reffitCanvas3","",900*2,750*3);
+  if(!c3[3]) c3[3] = new TCanvas("reffitCanvas4","",900*2,750*3);
+  if(!c3[4]) c3[4] = new TCanvas("reffitCanvas5","",900*2,750*3);
+  //c1->cd(); need this? it seems not
+  
+  //  int minEntries=std::numeric_limits<int>::max();
+  for(size_t histNr=0;histNr<5;histNr++){
+   
+    std::string suffex;
+    if(histNr<suffexes.size()) suffex = suffexes[histNr];
+    float yOffset = ((histNr)%6)%2 * 0.5;
+    float xOffset = ((histNr)%6)/2 * 0.33;
+    //plot1DHist(file,c1,c2[histNr],xOffset,yOffset,baseDir,histInfo,suffex,runsToValidate);
+    plot1DHistWithRef(file,c1,c2[histNr],c3[histNr],xOffset,yOffset,baseDir,histInfo,suffex,refRuns,runsToValidate);
+  } 
+  
+  c1->Update();
+  c2[0]->Update();
+  c2[1]->Update();
+  c2[2]->Update();
+  c2[3]->Update();
+  c2[4]->Update();
+
+  c3[0]->Update();
+  c3[1]->Update();
+  c3[2]->Update();
+  c3[3]->Update();
+  c3[4]->Update();
 }
+
+//TCanvas* makePlotTest(TFile* file,const HistInfo& histInfo,const std::vector<RunsInfo>& runsToValidate)
+//{
+//  return makePlot(file,histInfo,runsToValidate);
+//
+//}
 

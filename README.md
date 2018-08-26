@@ -1,3 +1,7 @@
+# example to run makeOnluDQMplots locally
+
+python pyScripts/makeOnlineDQMPlots.py /Volumes/Samsung_T3/2018_HLT_Performances/PixelMatchStudy/eff/DQM_TrigObjTnpSource_all.root -o test --update -r hltData2018_runInfo.json &> log.txt &
+
 # DQMScripts
 
 This package allows E/gamma (HLT so far) to manipulate the histograms stored in the DQM for easier validation. There are seperate scripts for the type of monitoring, so far MC RelVals and Prompt Data 

@@ -41,7 +41,9 @@ def get_new_fills(fills,runs_already_processed):
 
 def get_hists_to_plot():
     hists_to_plot = []
-    hists_to_plot.append(ROOT.HistInfo("hltEle32WPTight","HcalIsoFilter","PixelMatchFilter"))
+    #hists_to_plot.append(ROOT.HistInfo("hltEle32WPTight","HcalIsoFilter","PixelMatchFilter"))
+    hists_to_plot.append(ROOT.HistInfo("hltEle32WPTight","hltEle32WPTightHcalIsoFilter","hltEle32WPTightPixelMatchFilter"))
+    hists_to_plot.append(ROOT.HistInfo("hltEle32WPTight","hltEG32L1SingleEGOrEtFilter","hltEle32WPTightPixelMatchFilter"))
     return hists_to_plot
 
 def convert_to_fills(datasets_runs,run_info):
@@ -61,12 +63,19 @@ def makeOnlineDQMPlots(filename,base_output_dir,update,run_info):
     ROOT.gErrorIgnoreLevel = ROOT.kError
     ROOT.gROOT.ProcessLine(".L rootScripts/RooCMSShape.cc++")
     ROOT.gROOT.ProcessLine(".L rootScripts/makeOnlineDQMPlots.C+")
+    ROOT.gROOT.SetBatch()
+
+    ref_runs = [320804,321397,321396]
 
     if not os.path.exists(base_output_dir):
         os.mkdir(base_output_dir)
     elif not update:
         print "error, ",base_output_dir," exists and update is not set to true"
         sys.exit()
+
+    ref_runs_info = ROOT.RunsInfo(ROOT.vector('int')(),'reference')
+    for ref_run in ref_runs:
+        ref_runs_info.runs.push_back(ref_run)
 
     # open root file
     root_file = ROOT.TFile(args.filename)
@@ -116,11 +125,12 @@ def makeOnlineDQMPlots(filename,base_output_dir,update,run_info):
     week_html_str +='</ul></div>'
   
     # 
+    index_file = open(base_output_dir+"/"+hist_info.pathName+"/index.html","w")
+
     for hist_info in hists_to_plot:
         if not os.path.exists(base_output_dir+"/"+hist_info.pathName):
             os.mkdir(base_output_dir+"/"+hist_info.pathName)
 
-        index_file = open(base_output_dir+"/"+hist_info.pathName+"/index.html","w")
         week_html_str += '<h2 id=\"{path_name}\">{path_name}</h2>'.format(path_name=hist_info.pathName) 
         week_html_str += '<a href="#top">back to table of contents</a><br><br>'
         week_output_name = hist_info.pathName+"-"+hist_info.filterName2+"-"+week_str+".png"
@@ -144,21 +154,40 @@ def makeOnlineDQMPlots(filename,base_output_dir,update,run_info):
 
             val_runs_info_all.push_back(fill_runs_info)
             
-            output_name = hist_info.pathName+"-"+hist_info.filterName2+"-Fill"+str(fill)+".png"
+            output_name = hist_info.pathName+"-"+hist_info.filterName1+"-"+hist_info.filterName2+"-Fill"+str(fill)+".png"
+            fitoutput_name1 = hist_info.pathName+"-"+hist_info.filterName1+"-"+hist_info.filterName2+"ptEE-Fill"+str(fill)+".png"
+            fitoutput_name2 = hist_info.pathName+"-"+hist_info.filterName1+"-"+hist_info.filterName2+"ptEB-Fill"+str(fill)+".png"
+            fitoutput_name3 = hist_info.pathName+"-"+hist_info.filterName1+"-"+hist_info.filterName2+"phiEE-Fill"+str(fill)+".png"
+            fitoutput_name4 = hist_info.pathName+"-"+hist_info.filterName1+"-"+hist_info.filterName2+"phiEB-Fill"+str(fill)+".png"
+            fitoutput_name5 = hist_info.pathName+"-"+hist_info.filterName1+"-"+hist_info.filterName2+"eta-Fill"+str(fill)+".png"
             print output_name
 
             #if new_run and count < 2:
-            if new_run:
-                ROOT.makePlot(root_file,hist_info,val_runs_info_all) 
-                ROOT.effCanvas.Print(base_output_dir+"/"+hist_info.pathName+"/"+output_name)
+            #if new_run:
+            #    ROOT.makePlot(root_file,hist_info,ref_runs_info,val_runs_info_all) 
+            #    ROOT.effCanvas.Print(base_output_dir+"/"+hist_info.pathName+"/"+output_name)
+            #    ROOT.effCanvas.Print(base_output_dir+"/"+hist_info.pathName+"/"+output_name)
+            #    ROOT.fitCanvas1.Print(base_output_dir+"/"+hist_info.pathName+"/"+fitoutput_name1)
+            #    ROOT.fitCanvas2.Print(base_output_dir+"/"+hist_info.pathName+"/"+fitoutput_name2)
+            #    ROOT.fitCanvas3.Print(base_output_dir+"/"+hist_info.pathName+"/"+fitoutput_name3)
+            #    ROOT.fitCanvas4.Print(base_output_dir+"/"+hist_info.pathName+"/"+fitoutput_name4)
+            #    ROOT.fitCanvas5.Print(base_output_dir+"/"+hist_info.pathName+"/"+fitoutput_name5)
 
 
-            html_str = "Path: {} Filter: {} <br>\n".format(hist_info.pathName,hist_info.filterName2)
+            html_str = "Path: {} Filter1: {} Filter2: {} <br>\n".format(hist_info.pathName,hist_info.filterName1,hist_info.filterName2)
             html_str += "  Fill <a href=\"https://cmswbm.cern.ch/cmsdb/servlet/FillRuntimeChart?lhcFillID={fill}\">{fill}</a>, runs ".format(fill=fill)
             for run in fills[fill]:
                 html_str +=' <a href=\"https://cmswbm.cern.ch/cmsdb/servlet/RunSummary?RUN={run}\">{run}</a>'.format(run=run)           
+            html_str += "<br>ref runs: "
+            for run in ref_runs:
+                html_str +=' <a href=\"https://cmswbm.cern.ch/cmsdb/servlet/RunSummary?RUN={run}\">{run}</a>'.format(run=run)           
             html_str += "<br>\n"
             html_str += "<a href=\"{name}\"><img class=\"image\" width=\"1000\" src=\"{name}\" ALIGH=TOP></a><br><br>\n".format(name=output_name)
+            html_str += "Fit results : <a href=\"{name}\">Eff vs pt (Barrel), </a>\n".format(name=fitoutput_name2)  
+            html_str += "<a href=\"{name}\">Eff vs pt (Endcap), </a>\n".format(name=fitoutput_name1)  
+            html_str += "<a href=\"{name}\">Eff vs phi (Barrel), </a>\n".format(name=fitoutput_name4)  
+            html_str += "<a href=\"{name}\">Eff vs phi (Endcap), </a>\n".format(name=fitoutput_name3)  
+            html_str += "<a href=\"{name}\">Eff vs eta </a><br><br>\n".format(name=fitoutput_name5)  
             index_file.write(html_str)
             
             if new_run:
