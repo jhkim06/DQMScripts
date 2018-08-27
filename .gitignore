@@ -1,6 +1,7 @@
 *.json
 *.pyc
 test/
+log.txt
 *~
 rootScripts/*.so
 rootScripts/*.d

@@ -43,7 +43,7 @@ def get_hists_to_plot():
     hists_to_plot = []
     #hists_to_plot.append(ROOT.HistInfo("hltEle32WPTight","HcalIsoFilter","PixelMatchFilter"))
     hists_to_plot.append(ROOT.HistInfo("hltEle32WPTight","hltEle32WPTightHcalIsoFilter","hltEle32WPTightPixelMatchFilter"))
-    hists_to_plot.append(ROOT.HistInfo("hltEle32WPTight","hltEG32L1SingleEGOrEtFilter","hltEle32WPTightPixelMatchFilter"))
+    hists_to_plot.append(ROOT.HistInfo("hltEle32WPTight","hltEG32L1SingleEGOrEtFilter","hltEle32WPTightGsfTrackIsoFilter"))
     return hists_to_plot
 
 def convert_to_fills(datasets_runs,run_info):
@@ -125,11 +125,13 @@ def makeOnlineDQMPlots(filename,base_output_dir,update,run_info):
     week_html_str +='</ul></div>'
   
     # 
+    if not os.path.exists(base_output_dir+"/"+hist_info.pathName):
+            os.mkdir(base_output_dir+"/"+hist_info.pathName)
     index_file = open(base_output_dir+"/"+hist_info.pathName+"/index.html","w")
 
     for hist_info in hists_to_plot:
-        if not os.path.exists(base_output_dir+"/"+hist_info.pathName):
-            os.mkdir(base_output_dir+"/"+hist_info.pathName)
+        #if not os.path.exists(base_output_dir+"/"+hist_info.pathName):
+        #    os.mkdir(base_output_dir+"/"+hist_info.pathName)
 
         week_html_str += '<h2 id=\"{path_name}\">{path_name}</h2>'.format(path_name=hist_info.pathName) 
         week_html_str += '<a href="#top">back to table of contents</a><br><br>'
@@ -165,7 +167,6 @@ def makeOnlineDQMPlots(filename,base_output_dir,update,run_info):
             #if new_run and count < 2:
             if new_run:
                 ROOT.makePlot(root_file,hist_info,ref_runs_info,val_runs_info_all) 
-                ROOT.effCanvas.Print(base_output_dir+"/"+hist_info.pathName+"/"+output_name)
                 ROOT.effCanvas.Print(base_output_dir+"/"+hist_info.pathName+"/"+output_name)
                 ROOT.fitCanvas1.Print(base_output_dir+"/"+hist_info.pathName+"/"+fitoutput_name1)
                 ROOT.fitCanvas2.Print(base_output_dir+"/"+hist_info.pathName+"/"+fitoutput_name2)

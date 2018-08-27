@@ -832,7 +832,7 @@ void makePlot(TFile* file,const HistInfo& histInfo, const RunsInfo& refRuns, con
     float yOffset = ((histNr)%6)%2 * 0.5;
     float xOffset = ((histNr)%6)/2 * 0.33;
     //plot1DHist(file,c1,c2[histNr],xOffset,yOffset,baseDir,histInfo,suffex,runsToValidate);
-    plot1DHistWithRef(file,c1,c2[histNr],c3[histNr],xOffset,yOffset,baseDir,histInfo,suffex,refRuns,runsToValidate);
+    plot1DHistWithRef(file,c1,c2[histNr],c3[histNr],xOffset,yOffset,baseDir,histInfo,suffex,refRuns,runsToValidate); //FIXME do fit only once for reference runs
   } 
   
   c1->Update();
