@@ -65,7 +65,7 @@ def makeOnlineDQMPlots(filename,base_output_dir,update,run_info):
     ROOT.gROOT.ProcessLine(".L rootScripts/makeOnlineDQMPlots.C+")
     ROOT.gROOT.SetBatch()
 
-    ref_runs = [320804,321397,321396]
+    ref_runs = [321177,321178]
 
     if not os.path.exists(base_output_dir):
         os.mkdir(base_output_dir)
@@ -81,7 +81,7 @@ def makeOnlineDQMPlots(filename,base_output_dir,update,run_info):
     root_file = ROOT.TFile(args.filename)
 
     runs_availible = egHLTDQMDownloader_v2.get_datasets_runs_in_file(root_file)
-    print runs_availible
+    #print runs_availible
 
     fills = convert_to_fills(runs_availible,run_info)
     fillnrs = fills.keys()
@@ -91,7 +91,6 @@ def makeOnlineDQMPlots(filename,base_output_dir,update,run_info):
     print fillnrs
 
     hists_to_plot = get_hists_to_plot()
-
 
     runs_already_processed = [] # FIMXE:
 
@@ -167,13 +166,13 @@ def makeOnlineDQMPlots(filename,base_output_dir,update,run_info):
             #if new_run and count < 2:
             if new_run:
                 ROOT.makePlot(root_file,hist_info,ref_runs_info,val_runs_info_all) 
+                # canvas created in makeOnlineDQMPlots.C
                 ROOT.effCanvas.Print(base_output_dir+"/"+hist_info.pathName+"/"+output_name)
                 ROOT.fitCanvas1.Print(base_output_dir+"/"+hist_info.pathName+"/"+fitoutput_name1)
                 ROOT.fitCanvas2.Print(base_output_dir+"/"+hist_info.pathName+"/"+fitoutput_name2)
                 ROOT.fitCanvas3.Print(base_output_dir+"/"+hist_info.pathName+"/"+fitoutput_name3)
                 ROOT.fitCanvas4.Print(base_output_dir+"/"+hist_info.pathName+"/"+fitoutput_name4)
                 ROOT.fitCanvas5.Print(base_output_dir+"/"+hist_info.pathName+"/"+fitoutput_name5)
-
 
             html_str = "Path: {} Filter1: {} Filter2: {} <br>\n".format(hist_info.pathName,hist_info.filterName1,hist_info.filterName2)
             html_str += "  Fill <a href=\"https://cmswbm.cern.ch/cmsdb/servlet/FillRuntimeChart?lhcFillID={fill}\">{fill}</a>, runs ".format(fill=fill)
