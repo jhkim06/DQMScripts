@@ -40,10 +40,10 @@ def get_runs_already_processed(base_output_dir,current_week_nr):
 
 def generate_path_index_links(hists_to_plot):
     link_str = """<div id="toc_container">
-    <p class="toc_title">Paths</p>
+    <p class="toc_title">Filters</p>
     <ul class="toc_list">"""
     for hist_info in hists_to_plot:
-        link_str += "<li><a href=\"{path_name}\">{path_name}</a><br>\n".format(path_name=hist_info.pathName)
+        link_str += "<li><a href=\"{dir_name}\">{filter_name}</a><br>\n".format(dir_name=hist_info.pathName+"-"+hist_info.filterName1+"-"+hist_info.filterName2, filter_name=hist_info.filterName2+" w.r.t. "+hist_info.filterName1)
     link_str +='</ul></div>'
     return link_str
 
@@ -104,6 +104,7 @@ def makeOnlineDQMPlots(filename,base_output_dir,update,run_info):
         print "error, ",base_output_dir," exists and update is not set to true"
         sys.exit()
 
+    # get isoweek number 
     week_str = 'week'+get_validation_week_nr()
     if not os.path.exists(base_output_dir+"/"+week_str):
         os.mkdir(base_output_dir+"/"+week_str)
@@ -118,6 +119,7 @@ def makeOnlineDQMPlots(filename,base_output_dir,update,run_info):
     runs_availible = egHLTDQMDownloader_v2.get_datasets_runs_in_file(root_file)
     #print runs_availible
 
+    # get json for processed runs
     runs_already_processed = get_runs_already_processed(base_output_dir,get_validation_week_nr())
 
     fills = convert_to_fills(runs_availible,run_info)
@@ -152,25 +154,19 @@ def makeOnlineDQMPlots(filename,base_output_dir,update,run_info):
     week_html_str += "<br>"
     week_html_str += """
     <div id="toc_container">
-    <p class="toc_title">Paths</p>
+    <p class="toc_title">Filters</p>
     <ul class="toc_list">"""
     for hist_info in hists_to_plot:
-        week_html_str+='<li><a href="#{path_name}">{path_name}</a>'.format(path_name=hist_info.pathName)
+        week_html_str+='<li><a href="#{position_name}">{filter_name}</a>'.format(position_name=hist_info.filterName2, filter_name=hist_info.filterName2+" w.r.t. "+hist_info.filterName1)
     week_html_str +='</ul></div>'
   
-    # 
-    #if not os.path.exists(base_output_dir+"/"+hist_info.pathName):
-    #        os.mkdir(base_output_dir+"/"+hist_info.pathName)
-    #index_file = open(base_output_dir+"/"+hist_info.pathName+"/index.html","w")
 
     for hist_info in hists_to_plot:
-        #if not os.path.exists(base_output_dir+"/"+hist_info.pathName):
-        #    os.mkdir(base_output_dir+"/"+hist_info.pathName)
-        if not os.path.exists(base_output_dir+"/"+hist_info.pathName):
-                os.mkdir(base_output_dir+"/"+hist_info.pathName)
+        if not os.path.exists(base_output_dir+"/"+hist_info.pathName+"-"+hist_info.filterName1+"-"+hist_info.filterName2):
+                os.mkdir(base_output_dir+"/"+hist_info.pathName+"-"+hist_info.filterName1+"-"+hist_info.filterName2)
 
-        index_file = open(base_output_dir+"/"+hist_info.pathName+"/index.html","w")
-        week_html_str += '<h2 id=\"{path_name}\">{path_name}</h2>'.format(path_name=hist_info.pathName) 
+        index_file = open(base_output_dir+"/"+hist_info.pathName+"-"+hist_info.filterName1+"-"+hist_info.filterName2+"/index.html","w")
+        week_html_str += '<h2 id=\"{filter_name}\">{filter_name}</h2>'.format(filter_name=hist_info.filterName2) # pointer 
         week_html_str += '<a href="#top">back to table of contents</a><br><br>'
         week_output_name = hist_info.pathName+"-"+hist_info.filterName2+"-"+week_str+".png"
         week_html_str += "<a href=\"{name}\"><img class=\"image\" width=\"1000\" src=\"{name}\" ALIGH=TOP></a><br><br>\n".format(name=week_output_name)
@@ -205,12 +201,12 @@ def makeOnlineDQMPlots(filename,base_output_dir,update,run_info):
             #if new_run:
                 ROOT.makePlot(root_file,hist_info,ref_runs_info,val_runs_info_all) 
                 # canvas created in makeOnlineDQMPlots.C
-                ROOT.effCanvas.Print(base_output_dir+"/"+hist_info.pathName+"/"+output_name)
-                ROOT.fitCanvas1.Print(base_output_dir+"/"+hist_info.pathName+"/"+fitoutput_name1)
-                ROOT.fitCanvas2.Print(base_output_dir+"/"+hist_info.pathName+"/"+fitoutput_name2)
-                ROOT.fitCanvas3.Print(base_output_dir+"/"+hist_info.pathName+"/"+fitoutput_name3)
-                ROOT.fitCanvas4.Print(base_output_dir+"/"+hist_info.pathName+"/"+fitoutput_name4)
-                ROOT.fitCanvas5.Print(base_output_dir+"/"+hist_info.pathName+"/"+fitoutput_name5)
+                ROOT.effCanvas.Print(base_output_dir+"/"+hist_info.pathName+"-"+hist_info.filterName1+"-"+hist_info.filterName2+"/"+output_name)
+                ROOT.fitCanvas1.Print(base_output_dir+"/"+hist_info.pathName+"-"+hist_info.filterName1+"-"+hist_info.filterName2+"/"+fitoutput_name1)
+                ROOT.fitCanvas2.Print(base_output_dir+"/"+hist_info.pathName+"-"+hist_info.filterName1+"-"+hist_info.filterName2+"/"+fitoutput_name2)
+                ROOT.fitCanvas3.Print(base_output_dir+"/"+hist_info.pathName+"-"+hist_info.filterName1+"-"+hist_info.filterName2+"/"+fitoutput_name3)
+                ROOT.fitCanvas4.Print(base_output_dir+"/"+hist_info.pathName+"-"+hist_info.filterName1+"-"+hist_info.filterName2+"/"+fitoutput_name4)
+                ROOT.fitCanvas5.Print(base_output_dir+"/"+hist_info.pathName+"-"+hist_info.filterName1+"-"+hist_info.filterName2+"/"+fitoutput_name5)
 
             html_str = "Path: {} Filter1: {} Filter2: {} <br>\n".format(hist_info.pathName,hist_info.filterName1,hist_info.filterName2)
             html_str += "  Fill <a href=\"https://cmswbm.cern.ch/cmsdb/servlet/FillRuntimeChart?lhcFillID={fill}\">{fill}</a>, runs ".format(fill=fill)
@@ -235,7 +231,7 @@ def makeOnlineDQMPlots(filename,base_output_dir,update,run_info):
                 for run in fills[fill]:
                     week_html_str +=' <a href=\"https://cmswbm.cern.ch/cmsdb/servlet/RunSummary?RUN={run}\">{run}</a>'.format(run=run)           
                 week_html_str += "<br>\n"
-                week_html_str += "<a href=\"{name}\"><img class=\"image\" width=\"1000\" src=\"{name}\" ALIGH=TOP></a><br><br>\n".format(name="../"+hist_info.pathName+"/"+output_name)  
+                week_html_str += "<a href=\"{name}\"><img class=\"image\" width=\"1000\" src=\"{name}\" ALIGH=TOP></a><br><br>\n".format(name="../"+hist_info.pathName+"-"+hist_info.filterName1+"-"+hist_info.filterName2+"/"+output_name)  
 
         index_file.close()
         week_runs_info_all = ROOT.std.vector('RunsInfo')()
