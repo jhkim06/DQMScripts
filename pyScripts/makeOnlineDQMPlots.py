@@ -37,17 +37,32 @@ def generate_day_index_links(current_week_str,current_day_str,base_output_dir):
     #             for run in fills[fill]:
     #                week_html_str +=' <a href=\"https://cmswbm.cern.ch/cmsdb/servlet/RunSummary?RUN={run}\">{run}</a>'.format(run=run)
 
+    #FIXME: fix to make links properly 
     link_str = """<div id="toc_container">
     <ul class="toc_list">"""
     link_str+='<li>{}: <a href="{}">{}</a>'.format(current_week_str,current_week_str+'/'+current_day_str,current_day_str) # ex) day1, day3
     for week_nr in range(53,0,-1):
-        for day_nr in range(1,7):
-            week_str='week{:02d}'.format(week_nr)
+        first_day_of_this_week = True
+        week_str='week{:02d}'.format(week_nr)
+        for day_nr in range(7,0,-1):
             day_str='day{:d}'.format(day_nr)
             if week_str == current_week_str and day_nr == current_day_str: continue
             file_name = base_output_dir+'/'+week_str+'/'+day_str+'/index.html'
             if os.path.isfile(file_name):
-                link_str+='<li><a href="{}">{}</a>'.format(current_week_str+'_'+current_day_str,current_day_str)
+                if first_day_of_this_week and week_str != current_week_str: 
+                   link_str+='<li>{}: <a href="{}">{}</a>'.format(week_str,week_str+'/'+day_str,day_str) # make new week bullet
+                   first_day_of_this_week = False
+                   continue
+                if first_day_of_this_week and week_str == current_week_str:
+                   link_str+=' <a href="{}">{}</a>'.format(week_str+'/'+day_str,day_str) # add day 
+                   first_day_of_this_week = False
+                   continue
+                if first_day_of_this_week == False:
+                   link_str+=' <a href="{}">{}</a>'.format(week_str+'/'+day_str,day_str) # add day 
+                   continue
+                   
+
+
     link_str +='</ul></div>'
     return link_str
 
@@ -246,8 +261,8 @@ def makeOnlineDQMPlots(filename,base_output_dir,update,run_info):
             fitoutput_name5 = hist_info.pathName+"-"+hist_info.filterName1+"-"+hist_info.filterName2+"eta-Fill"+str(fill)+".png"
             print output_name
 
-            if new_run and count < 2:
-            #if new_run:
+            #if new_run and count < 2:
+            if new_run:
                 ROOT.makePlot(root_file,hist_info,ref_runs_info,val_runs_info_all) 
                 # canvas created in makeOnlineDQMPlots.C
                 ROOT.effCanvas.Print(base_output_dir+"/"+hist_info.pathName+"-"+hist_info.filterName1+"-"+hist_info.filterName2+"/"+output_name)
@@ -274,8 +289,8 @@ def makeOnlineDQMPlots(filename,base_output_dir,update,run_info):
             html_str += "<a href=\"{name}\">Eff vs eta </a><br><br>\n".format(name=fitoutput_name5)  
             index_file.write(html_str)
             
-            if new_run and count < 2:
-            #if new_run:
+            #if new_run and count < 2:
+            if new_run:
                 week_html_str += "  Fill <a href=\"https://cmswbm.cern.ch/cmsdb/servlet/FillRuntimeChart?lhcFillID={fill}\">{fill}</a>, runs ".format(fill=fill)
                 for run in fills[fill]:
                     week_html_str +=' <a href=\"https://cmswbm.cern.ch/cmsdb/servlet/RunSummary?RUN={run}\">{run}</a>'.format(run=run)           
