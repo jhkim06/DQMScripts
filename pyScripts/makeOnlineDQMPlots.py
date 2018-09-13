@@ -261,8 +261,8 @@ def makeOnlineDQMPlots(filename,base_output_dir,update,run_info):
             fitoutput_name5 = hist_info.pathName+"-"+hist_info.filterName1+"-"+hist_info.filterName2+"eta-Fill"+str(fill)+".png"
             print output_name
 
-            #if new_run and count < 2:
-            if new_run:
+            if new_run and count < 2:
+            #if new_run:
                 ROOT.makePlot(root_file,hist_info,ref_runs_info,val_runs_info_all) 
                 # canvas created in makeOnlineDQMPlots.C
                 ROOT.effCanvas.Print(base_output_dir+"/"+hist_info.pathName+"-"+hist_info.filterName1+"-"+hist_info.filterName2+"/"+output_name)
@@ -289,16 +289,20 @@ def makeOnlineDQMPlots(filename,base_output_dir,update,run_info):
             html_str += "<a href=\"{name}\">Eff vs eta </a><br><br>\n".format(name=fitoutput_name5)  
             index_file.write(html_str)
             
-            #if new_run and count < 2:
-            if new_run:
+            if new_run and count < 2:
+            #if new_run:
                 week_html_str += "  Fill <a href=\"https://cmswbm.cern.ch/cmsdb/servlet/FillRuntimeChart?lhcFillID={fill}\">{fill}</a>, runs ".format(fill=fill)
                 for run in fills[fill]:
                     week_html_str +=' <a href=\"https://cmswbm.cern.ch/cmsdb/servlet/RunSummary?RUN={run}\">{run}</a>'.format(run=run)           
                 week_html_str += "<br>\n"
                 week_html_str += "<a href=\"{name}\"><img class=\"image\" width=\"1000\" src=\"{name}\" ALIGH=TOP></a><br><br>\n".format(name="../"+hist_info.pathName+"-"+hist_info.filterName1+"-"+hist_info.filterName2+"/"+output_name)  
 
+        #FIXME it gives error where there is no new runs, so continue if there is no new runs
         index_file.close()
         week_runs_info_all = ROOT.std.vector('RunsInfo')()
+        if len(week_runs_info_all) == 0:
+            continue
+
         week_runs_info_all.push_back(week_runs_info)
         ROOT.makePlot(root_file,hist_info,ref_runs_info,week_runs_info_all)
         ROOT.effCanvas.Print(base_output_dir+"/"+week_str+"/"+day_str+"/"+week_output_name)

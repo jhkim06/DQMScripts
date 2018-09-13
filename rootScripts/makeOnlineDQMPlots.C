@@ -684,7 +684,7 @@ void plot1DHistWithRef(TFile* file,TCanvas* c1,TCanvas* c2, TCanvas* c3, float x
   TLegend* leg = new TLegend(0.305728,0.142857,0.847496,0.344948);
   leg->SetFillStyle(0);
   leg->SetBorderSize(0);
-  
+ 
   // loop over fill numbers 
   for(size_t runIdx=0;runIdx<runsToValidate.size(); runIdx++){
     const auto& runs = runsToValidate[runIdx];
