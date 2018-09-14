@@ -31,12 +31,6 @@ def generate_week_index_links(current_week_str,base_output_dir):
 
 def generate_day_index_links(current_week_str,current_day_str,base_output_dir):
 
-    #"""<div id="toc_container">
-    #<p class="toc_title">Filters</p>
-    #<ul class="toc_list">"""
-    #             for run in fills[fill]:
-    #                week_html_str +=' <a href=\"https://cmswbm.cern.ch/cmsdb/servlet/RunSummary?RUN={run}\">{run}</a>'.format(run=run)
-
     #FIXME: fix to make links properly 
     link_str = """<div id="toc_container">
     <ul class="toc_list">"""
@@ -46,7 +40,8 @@ def generate_day_index_links(current_week_str,current_day_str,base_output_dir):
         week_str='week{:02d}'.format(week_nr)
         for day_nr in range(7,0,-1):
             day_str='day{:d}'.format(day_nr)
-            if week_str == current_week_str and day_nr == current_day_str: continue
+            # skip current date since it is already printed above
+            if week_str == current_week_str and day_str == current_day_str: continue
             file_name = base_output_dir+'/'+week_str+'/'+day_str+'/index.html'
             if os.path.isfile(file_name):
                 if first_day_of_this_week and week_str != current_week_str: 
@@ -76,7 +71,7 @@ def get_runs_already_processed(base_output_dir,current_week_nr):
     return []
 
 def get_runs_already_processed(base_output_dir,current_week_nr, current_day_nr):
-    for week_nr in range(int(current_week_nr)-1,0,-1):
+    for week_nr in range(int(current_week_nr),0,-1): # this is daily basis, so need to check days in the current week also
         for day_nr in range(1,7):
             week_str='week{:02d}'.format(week_nr)
             day_str='day{:d}'.format(day_nr)
@@ -169,11 +164,12 @@ def makeOnlineDQMPlots(filename,base_output_dir,update,run_info):
     if not os.path.exists(base_output_dir+"/"+week_str):
         os.mkdir(base_output_dir+"/"+week_str)
 
-    # 
+    # get isoday and make day directory 
     day_str = 'day' + get_validation_day_nr()
     if not os.path.exists(base_output_dir+"/"+week_str+"/"+day_str):
         os.mkdir(base_output_dir+"/"+week_str+"/"+day_str)
 
+    # 
     ref_runs_info = ROOT.RunsInfo(ROOT.vector('int')(),'reference')
     for ref_run in ref_runs:
         ref_runs_info.runs.push_back(ref_run)
@@ -182,7 +178,6 @@ def makeOnlineDQMPlots(filename,base_output_dir,update,run_info):
     root_file = ROOT.TFile(args.filename)
 
     runs_availible = egHLTDQMDownloader_v2.get_datasets_runs_in_file(root_file)
-    #print runs_availible
 
     # get json for processed runs
     runs_already_processed = get_runs_already_processed(base_output_dir,get_validation_week_nr(), get_validation_day_nr())
@@ -191,9 +186,6 @@ def makeOnlineDQMPlots(filename,base_output_dir,update,run_info):
     fillnrs = fills.keys()
     fillnrs.sort(reverse=True)
 
-    print fills
-    print fillnrs
-
     hists_to_plot = get_hists_to_plot()
 
     new_fills = get_new_fills(fills,runs_already_processed)
@@ -201,7 +193,12 @@ def makeOnlineDQMPlots(filename,base_output_dir,update,run_info):
     for fill in new_fills:
         new_runs.extend(fills[fill])
     new_runs.sort(reverse=True)
-    runs_processed = get_runs_processed(week_str+'_'+day_str,fills) # runs_to_be_processed ?
+    runs_processed = get_runs_processed(week_str+'_'+day_str,fills) # this is to save processed runs as json later 
+
+    # if there is no new runs, just exit
+    if len(new_runs) ==0:
+        print "error, no new runs to validation"
+        sys.exit()
 
     main_index_html_str = "<h1>E/gamma HLT Validation<h1>\n<h2> Daily updates </h2>"
     main_index_html_str += generate_day_index_links(week_str,day_str,base_output_dir)
@@ -241,7 +238,6 @@ def makeOnlineDQMPlots(filename,base_output_dir,update,run_info):
             count = count + 1
             new_run = False
             val_runs_info_all = ROOT.std.vector('RunsInfo')()
-            print fill,fills[fill]
             fill_runs_info = ROOT.RunsInfo(ROOT.vector('int')(),'Fill '+str(fill))
             for run in fills[fill]:
                 fill_runs_info.runs.push_back(int(run))
@@ -259,7 +255,6 @@ def makeOnlineDQMPlots(filename,base_output_dir,update,run_info):
             fitoutput_name3 = hist_info.pathName+"-"+hist_info.filterName1+"-"+hist_info.filterName2+"phiEE-Fill"+str(fill)+".png"
             fitoutput_name4 = hist_info.pathName+"-"+hist_info.filterName1+"-"+hist_info.filterName2+"phiEB-Fill"+str(fill)+".png"
             fitoutput_name5 = hist_info.pathName+"-"+hist_info.filterName1+"-"+hist_info.filterName2+"eta-Fill"+str(fill)+".png"
-            print output_name
 
             if new_run and count < 2:
             #if new_run:
@@ -297,13 +292,11 @@ def makeOnlineDQMPlots(filename,base_output_dir,update,run_info):
                 week_html_str += "<br>\n"
                 week_html_str += "<a href=\"{name}\"><img class=\"image\" width=\"1000\" src=\"{name}\" ALIGH=TOP></a><br><br>\n".format(name="../"+hist_info.pathName+"-"+hist_info.filterName1+"-"+hist_info.filterName2+"/"+output_name)  
 
-        #FIXME it gives error where there is no new runs, so continue if there is no new runs
         index_file.close()
         week_runs_info_all = ROOT.std.vector('RunsInfo')()
+        week_runs_info_all.push_back(week_runs_info)
         if len(week_runs_info_all) == 0:
             continue
-
-        week_runs_info_all.push_back(week_runs_info)
         ROOT.makePlot(root_file,hist_info,ref_runs_info,week_runs_info_all)
         ROOT.effCanvas.Print(base_output_dir+"/"+week_str+"/"+day_str+"/"+week_output_name)
 
