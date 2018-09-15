@@ -118,11 +118,14 @@ TGraphAsymmErrors* DQMpureHLT_TnP_bwxcb(TCanvas* c2,TH2* hist_passed_2d, TH2* hi
  for(int ibin = 1; ibin < nbinx + 1; ibin++){
 
   // make pad for fit results
-  float xOffset = ((ibin-1)%6)%2 * 0.5;
-  float yOffset = ((ibin-1)%6)/2 * 0.33;
+  //float xOffset = ((ibin-1)%6)%2 * 0.5;
+  //float yOffset = ((ibin-1)%6)/2 * 0.33;
+
+  float xOffset = ((ibin-1)%4)%2 * 0.5;
+  float yOffset = ((ibin-1)%4)/2 * 0.5;
 
   //TPad* fitPad = new TPad("fitPad","",xOffset,yOffset+0.01,0.33+xOffset,0.5+yOffset);
-  TPad* fitPad = new TPad("fitPad","",xOffset,yOffset,0.5+xOffset,0.33+yOffset);
+  TPad* fitPad = new TPad("fitPad","",xOffset,yOffset,0.5+xOffset,0.5+yOffset);
   c2->cd();
   fitPad->Draw();
   fitPad->cd();
@@ -272,6 +275,7 @@ TGraphAsymmErrors* DQMpureHLT_TnP_bwxcb(TCanvas* c2,TH2* hist_passed_2d, TH2* hi
   pPass->GetYaxis()->SetTitleSize(yTitleSize);
   pPass->GetYaxis()->SetLabelSize(yLabelSize);
   pPass->GetYaxis()->SetDecimals(2);
+  pPass->GetXaxis()->SetTitle("mass [GeV]");
   pPass->GetXaxis()->SetTitleOffset(xTitleOffset);
   pPass->GetXaxis()->SetLabelSize(xLabelSize);
   pPass->GetXaxis()->SetTitleSize(xTitleSize);
@@ -306,6 +310,7 @@ TGraphAsymmErrors* DQMpureHLT_TnP_bwxcb(TCanvas* c2,TH2* hist_passed_2d, TH2* hi
   pFail->GetYaxis()->SetTitleSize(yTitleSize);
   pFail->GetYaxis()->SetLabelSize(yLabelSize);
   pFail->GetYaxis()->SetDecimals(2);
+  pFail->GetXaxis()->SetTitle("mass [GeV]");
   pFail->GetXaxis()->SetTitleOffset(xTitleOffset);
   pFail->GetXaxis()->SetLabelSize(xLabelSize);
   pFail->GetXaxis()->SetTitleSize(xTitleSize);
@@ -319,7 +324,7 @@ TGraphAsymmErrors* DQMpureHLT_TnP_bwxcb(TCanvas* c2,TH2* hist_passed_2d, TH2* hi
   TLatex failFitInfo;
   failFitInfo.SetNDC();
   failFitInfo.SetTextFont(42);
-  failFitInfo.SetTextSize(0.03);
+  failFitInfo.SetTextSize(0.035);
 
   TString chiFail;
   chiFail.Form("chi^{2}/NDF = %.3f", chi2F);
@@ -398,7 +403,7 @@ TGraphAsymmErrors* getMultiRunEffAsym(TFile* file,TCanvas* c2,const std::string&
   TH2* passHistAll = nullptr;
   TH2* totHistAll = nullptr;
 
-  std::vector<std::string> results; //FIXME : change name 
+  std::vector<std::string> name; //FIXME : change name 
   std::vector<std::string> var;
 
   std::string title;
@@ -415,15 +420,20 @@ TGraphAsymmErrors* getMultiRunEffAsym(TFile* file,TCanvas* c2,const std::string&
     }
     if(title.empty() && effHist){
       std::string nameTemp(passHist->GetTitle());
+      std::vector<std::string> name_;
 
       // get variable string
       std::string varTemp(effHist->GetXaxis()->GetTitle());
 
-      boost::split(results, nameTemp, [](char c){return c == '_';});
+      boost::split(name, nameTemp, [](char c){return c == '_';});
       boost::split(var, varTemp, [](char c){return c == ' ';});
 
-      title = std::string(results.at(1))+" vs " +var.at(0)+";"+effHist->GetXaxis()->GetTitle()+";Efficiency";
-      std::cout << "title: " << title << std::endl;
+      // in case name contains (barrel) or (endcap)
+      boost::split(name_, name.at(1), [](char c){return c == ' ';});
+
+      if(name_.size() == 1) title = name.at(1)+" vs_{} "+var.at(0)+";"+effHist->GetXaxis()->GetTitle()+";Efficiency"; // don't know why but it needs _{}, to properly print p_{T}
+      else title = name_.at(0)+" vs_{} "+var.at(0)+" "+std::string(name_.at(1))+";"+effHist->GetXaxis()->GetTitle()+";Efficiency";
+
     }
     if(passHistAll) passHistAll->Add(passHist);
     else passHistAll = passHist;
@@ -437,8 +447,6 @@ TGraphAsymmErrors* getMultiRunEffAsym(TFile* file,TCanvas* c2,const std::string&
 
     if(!title.empty()){ 
       effGraph->SetTitle(title.c_str());
-      std::cout << "x axis: " << effGraph->GetXaxis()->GetTitle() << std::endl;
-      std::cout << "y axis: " << effGraph->GetYaxis()->GetTitle() << std::endl;
     }
     return effGraph;
   }else return nullptr;
@@ -649,23 +657,23 @@ void plot1DHistWithRef(TFile* file,TCanvas* c1,TCanvas* c2, TCanvas* c3, float x
   unityFunc->SetParLimits(0,-0.1,0.1);
   unityFunc->SetParameter(0,0);
 
-  //std::string histName1 = "stdTag_"+histInfo.pathName+histInfo.filterName1+suffex;
-  //std::string histName2 = "stdTag_"+histInfo.pathName+histInfo.filterName2+suffex;
-
   std::string histName1 = "stdTag_"+histInfo.filterName1+suffex;
   std::string histName2 = "stdTag_"+histInfo.filterName2+suffex;
 
   std::cout << "histname1: " << histName1 << " histname2: " << histName2 << std::endl;
-  TPad* histPad = new TPad("histPad","",xOffset,yOffset+0.5*0.30,0.33+xOffset,0.5+yOffset);
+  TPad* histPad = new TPad("histPad","",xOffset+0.03,yOffset+0.5*0.30,0.33+xOffset,0.5+yOffset);
   c1->cd();
   histPad->Draw();
   histPad->cd();
+  histPad->SetRightMargin(0.05);
+  histPad->SetBottomMargin(0.05);
   histPad->SetGridx();
   histPad->SetGridy();
 
-  TPad* ratioPad = new TPad("ratioPad","",xOffset,yOffset+0.01,0.33+xOffset,0.5*0.33+yOffset);
-  //ratioPad->SetTopMargin(0.05);
-  ratioPad->SetBottomMargin(0.3);
+  TPad* ratioPad = new TPad("ratioPad","",xOffset+0.03,yOffset+0.01,0.33+xOffset,0.5*0.30+yOffset);
+  ratioPad->SetTopMargin(0.01);
+  ratioPad->SetRightMargin(0.05);
+  ratioPad->SetBottomMargin(0.5);
   //ratioPad->SetFillStyle(0);
   ratioPad->SetGridx();
   ratioPad->SetGridy();
@@ -678,10 +686,18 @@ void plot1DHistWithRef(TFile* file,TCanvas* c1,TCanvas* c2, TCanvas* c3, float x
   util::setHistStyle(ref,1,1,8,1);
   ref->SetFillStyle(0);
   ref->Draw("APE");
+  ref->GetYaxis()->SetTitleFont(63);
+  ref->GetYaxis()->SetTitleSize(30);
+  ref->GetYaxis()->SetTitleOffset(2.5);
   ref->GetYaxis()->SetRangeUser(0,1.05);
   ref->GetYaxis()->SetNdivisions(510);
+  ref->GetXaxis()->SetLabelFont(63);
+  ref->GetYaxis()->SetLabelFont(63);
+  ref->GetXaxis()->SetLabelSize(0);
+  ref->GetYaxis()->SetLabelSize(25);
+  ref->GetYaxis()->SetLabelOffset(0.01);
   ref->GetXaxis()->SetTitle("");
-  TLegend* leg = new TLegend(0.305728,0.142857,0.847496,0.344948);
+  TLegend* leg = new TLegend(0.45,0.15,0.85,0.3);
   leg->SetFillStyle(0);
   leg->SetBorderSize(0);
  
@@ -698,14 +714,25 @@ void plot1DHistWithRef(TFile* file,TCanvas* c1,TCanvas* c2, TCanvas* c3, float x
     ratio->GetHistogram()->SetMaximum(1.5);
     ratio->GetYaxis()->SetNdivisions(505);
     ratio->GetXaxis()->SetTitle(graph->GetXaxis()->GetTitle());
-    ratio->GetXaxis()->SetLabelSize(0.1);
-    ratio->GetXaxis()->SetTitleSize(0.1);
-    ratio->GetYaxis()->SetLabelSize(0.1);
-    ratio->GetYaxis()->SetTitleSize(0.1);
+    ratio->GetXaxis()->SetLabelFont(63);
+    ratio->GetYaxis()->SetLabelFont(63);
+    ratio->GetXaxis()->SetLabelSize(25);
+    ratio->GetYaxis()->SetLabelSize(25);
+    ratio->GetXaxis()->SetLabelOffset(0.03);
+    ratio->GetYaxis()->SetLabelOffset(0.01);
+    ratio->GetXaxis()->SetTitleFont(63);
+    ratio->GetXaxis()->SetTitleSize(30);
+    ratio->GetXaxis()->SetTitleOffset(7.);
     ratio->SetMarkerStyle(8);
     ratio->SetTitle("");
 
+    std::string ytitle;
+    std::string nom = runs.legendEntry.c_str();
+    std::string denom = "/reference"; 
+    ytitle = nom+denom;
+ 
     ratioPad->cd();
+    //ratio->GetYaxis()->SetTitle(ytitle.c_str());
     ratio->Fit(&*unityFunc,"q");
     ratio->SetFillStyle(0);
     ratio->Draw("APE");
@@ -811,17 +838,17 @@ void makePlot(TFile* file,const HistInfo& histInfo, const RunsInfo& refRuns, con
   
   if(!c1) c1 = new TCanvas("effCanvas","",900*1.5*2,750*2);
   
-  if(!c2[0]) c2[0] = new TCanvas("fitCanvas1","",900*2,750*3);
-  if(!c2[1]) c2[1] = new TCanvas("fitCanvas2","",900*2,750*3);
-  if(!c2[2]) c2[2] = new TCanvas("fitCanvas3","",900*2,750*3);
-  if(!c2[3]) c2[3] = new TCanvas("fitCanvas4","",900*2,750*3);
-  if(!c2[4]) c2[4] = new TCanvas("fitCanvas5","",900*2,750*3);
+  if(!c2[0]) c2[0] = new TCanvas("fitCanvas1","",900*1.5*2,900*2);
+  if(!c2[1]) c2[1] = new TCanvas("fitCanvas2","",900*1.5*2,900*2);
+  if(!c2[2]) c2[2] = new TCanvas("fitCanvas3","",900*1.5*2,900*2);
+  if(!c2[3]) c2[3] = new TCanvas("fitCanvas4","",900*1.5*2,900*2);
+  if(!c2[4]) c2[4] = new TCanvas("fitCanvas5","",900*1.5*2,900*2);
 
-  if(!c3[0]) c3[0] = new TCanvas("reffitCanvas1","",900*2,750*3);
-  if(!c3[1]) c3[1] = new TCanvas("reffitCanvas2","",900*2,750*3);
-  if(!c3[2]) c3[2] = new TCanvas("reffitCanvas3","",900*2,750*3);
-  if(!c3[3]) c3[3] = new TCanvas("reffitCanvas4","",900*2,750*3);
-  if(!c3[4]) c3[4] = new TCanvas("reffitCanvas5","",900*2,750*3);
+  if(!c3[0]) c3[0] = new TCanvas("reffitCanvas1","",900*1.5*2,900*2);
+  if(!c3[1]) c3[1] = new TCanvas("reffitCanvas2","",900*1.5*2,900*2);
+  if(!c3[2]) c3[2] = new TCanvas("reffitCanvas3","",900*1.5*2,900*2);
+  if(!c3[3]) c3[3] = new TCanvas("reffitCanvas4","",900*1.5*2,900*2);
+  if(!c3[4]) c3[4] = new TCanvas("reffitCanvas5","",900*1.5*2,900*2);
   //c1->cd(); need this? it seems not
   
   //  int minEntries=std::numeric_limits<int>::max();

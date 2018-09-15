@@ -31,7 +31,6 @@ def generate_week_index_links(current_week_str,base_output_dir):
 
 def generate_day_index_links(current_week_str,current_day_str,base_output_dir):
 
-    #FIXME: fix to make links properly 
     link_str = """<div id="toc_container">
     <ul class="toc_list">"""
     link_str+='<li>{}: <a href="{}">{}</a>'.format(current_week_str,current_week_str+'/'+current_day_str,current_day_str) # ex) day1, day3
@@ -55,8 +54,6 @@ def generate_day_index_links(current_week_str,current_day_str,base_output_dir):
                 if first_day_of_this_week == False:
                    link_str+=' <a href="{}">{}</a>'.format(week_str+'/'+day_str,day_str) # add day 
                    continue
-                   
-
 
     link_str +='</ul></div>'
     return link_str
